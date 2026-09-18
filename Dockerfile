@@ -1,20 +1,52 @@
-# Use an official Node.js runtime as a base
-FROM node:18
+# ─────────────────────────────────────────────────────────────
+# Puna Bot — production Dockerfile
+# ─────────────────────────────────────────────────────────────
 
-# Set working directory inside the container
-WORKDIR /app
+# 1. Base image: Node 20 LTS on Debian slim (smaller than full,
+#    more compatible than Alpine for native modules like mongodb).
+FROM node:20-bookworm-slim AS base
 
-# Copy package.json and package-lock.json first (better caching)
-COPY package*.json ./
+# 2. Set working directory
+WORKDIR /usr/src/app
 
-# Install dependencies
-RUN npm install
+# 3. Install only production deps first (better layer caching).
+#    Copying package files separately means `npm ci` only re-runs
+#    when dependencies change, not on every source edit.
+COPY package.json package-lock.json* ./
 
-# Copy the rest of your bot code
-COPY . .
+# ─────────────────────────────────────────────────────────────
+# Build stage: install deps (including devDeps for potential build)
+# ─────────────────────────────────────────────────────────────
+FROM base AS deps
 
-# Expose no ports (Discord bots don’t need incoming HTTP)
-# EXPOSE 3000  <-- only if you add a web dashboard
+RUN npm ci --omit=dev --no-audit --no-fund \
+    && npm cache clean --force
+
+# ─────────────────────────────────────────────────────────────
+# Runtime stage: copy source, drop privileges, run
+# ─────────────────────────────────────────────────────────────
+FROM base AS runtime
+
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# Copy production node_modules from deps stage
+COPY --from=deps /usr/src/app/node_modules ./node_modules
+
+# Copy application source
+COPY package.json ./
+COPY src ./src
+
+# Create a non-root user so the container doesn't run as root.
+# node:20-* images already include a `node` user (uid 1000).
+USER node
+
+# Render injects $PORT; expose 3000 as a default for local `docker run`.
+EXPOSE 3000
+
+# Health check — matches the /health endpoint in instanceWake.js
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD node -e "require('http').get('http://127.0.0.1:'+(process.env.PORT||3000)+'/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
 
 # Start the bot
-CMD ["npm", "start"]
+CMD ["node", "src/index.js"]
