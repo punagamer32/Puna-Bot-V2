@@ -1,13 +1,23 @@
-const mongoose = require('mongoose');
+require('dotenv').config();
+const { Client, GatewayIntentBits, Collection } = require('discord.js');
+const { connectDB } = require('./database');
+const { loadCommands } = require('./handlers/commandHandler');
+const { loadEvents } = require('./handlers/eventHandler');
 
-async function connectDB() {
-  try {
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ MongoDB connected');
-  } catch (err) {
-    console.error('❌ MongoDB connection failed:', err.message);
-    process.exit(1);
-  }
-}
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent, // Required for prefix commands
+  ],
+});
 
-module.exports = { connectDB };
+client.commands = new Collection();
+client.prefixCommands = new Collection();
+
+(async () => {
+  await connectDB();
+  await loadCommands(client);
+  await loadEvents(client);
+  await client.login(process.env.DISCORD_TOKEN);
+})();
