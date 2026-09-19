@@ -10,7 +10,7 @@ FROM node:20-bookworm-slim AS base
 WORKDIR /usr/src/app
 
 # 3. Install Deoendencies
-COPY package.json package-lock.json
+COPY package.json ./
 
 # ─────────────────────────────────────────────────────────────
 # Build stage: install deps (including devDeps for potential build)
