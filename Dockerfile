@@ -9,10 +9,8 @@ FROM node:20-bookworm-slim AS base
 # 2. Set working directory
 WORKDIR /usr/src/app
 
-# 3. Install only production deps first (better layer caching).
-#    Copying package files separately means `npm ci` only re-runs
-#    when dependencies change, not on every source edit.
-COPY package.json package-lock.json* ./
+# 3. Install Deoendencies
+COPY package.json
 
 # ─────────────────────────────────────────────────────────────
 # Build stage: install deps (including devDeps for potential build)
@@ -34,7 +32,7 @@ ENV PORT=3000
 COPY --from=deps /usr/src/app/node_modules ./node_modules
 
 # Copy application source
-COPY package.json ./
+COPY database.js ./
 COPY src ./src
 
 # Create a non-root user so the container doesn't run as root.
