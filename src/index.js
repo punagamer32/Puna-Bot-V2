@@ -14,10 +14,12 @@ const client = new Client({
 
 client.commands = new Collection();
 client.prefixCommands = new Collection();
-
 (async () => {
   await connectDB();
   await loadCommands(client);
   await loadEvents(client);
   await client.login(process.env.DISCORD_TOKEN);
 })();
+
+const { startInstanceWake } = require('./instanceWake');
+startInstanceWake();
