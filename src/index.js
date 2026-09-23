@@ -1,10 +1,11 @@
 require('dotenv').config();
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
-const { connectDB } = require('../database');
+const { connectDB } = require('./database');
 const { loadCommands } = require('./handlers/commandHandler');
 const { loadEvents } = require('./handlers/eventHandler');
 const { startInstanceWake } = require('./instanceWake');
 const { resumeActiveGames } = require('./games/rps');
+const { startTriviaScheduler } = require('./games/trivia');
 
 const client = new Client({
   intents: [
@@ -23,8 +24,8 @@ client.prefixCommands = new Collection();
   await loadEvents(client);
   await client.login(process.env.DISCORD_TOKEN);
 
-  // Rehydrate any in-flight RPS games after restart
   await resumeActiveGames(client);
+  await startTriviaScheduler(client);
 
   startInstanceWake();
 })();
