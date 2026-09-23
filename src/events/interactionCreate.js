@@ -1,21 +1,41 @@
 const { handleRpsButton } = require('../games/rps');
+const { handleTriviaButton, handleTriviaModal } = require('../games/trivia');
 
 module.exports = {
   name: 'interactionCreate',
   once: false,
   async execute(interaction, client) {
-    // ---- Button interactions ----
+    // ---- Buttons ----
     if (interaction.isButton()) {
-      if (interaction.customId.startsWith('rps:')) {
-        try {
+      try {
+        if (interaction.customId.startsWith('rps:')) {
           await handleRpsButton(interaction);
-        } catch (err) {
-          console.error('[rps] button handler error:', err);
-          if (!interaction.replied && !interaction.deferred) {
-            await interaction
-              .reply({ content: '❌ Something went wrong.', ephemeral: true })
-              .catch(() => {});
-          }
+        } else if (interaction.customId.startsWith('trivia:answer:')) {
+          await handleTriviaButton(interaction);
+        }
+      } catch (err) {
+        console.error('[button] handler error:', err);
+        if (!interaction.replied && !interaction.deferred) {
+          await interaction
+            .reply({ content: '❌ Something went wrong.', ephemeral: true })
+            .catch(() => {});
+        }
+      }
+      return;
+    }
+
+    // ---- Modals ----
+    if (interaction.isModalSubmit()) {
+      try {
+        if (interaction.customId.startsWith('trivia:submit:')) {
+          await handleTriviaModal(interaction);
+        }
+      } catch (err) {
+        console.error('[modal] handler error:', err);
+        if (!interaction.replied && !interaction.deferred) {
+          await interaction
+            .reply({ content: '❌ Something went wrong.', ephemeral: true })
+            .catch(() => {});
         }
       }
       return;
