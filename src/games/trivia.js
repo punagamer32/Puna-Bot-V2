@@ -92,12 +92,13 @@ async function postQuestion(client, guildId, { force = false } = {}) {
   const config = await TriviaConfig.findOne({ guildId });
   if (!config || !config.channelId) return;
 
-  // Skip if a question is already active and unanswered (unless forced by !trivia run)
   const aq = config.activeQuestion;
   const isActive = aq?.messageId && aq?.answer && !aq?.answeredAt;
   if (isActive && !force) return;
 
-  // Disable any previously active button before posting a new one
+  // Clear any pending timeout from a prior question
+  clearQuestionTimer(guildId);
+
   if (aq?.messageId) {
     await disableActiveButton(client, config);
   }
@@ -132,6 +133,13 @@ async function postQuestion(client, guildId, { force = false } = {}) {
     answeredAt: null,
   };
   await config.save();
+
+  // Arm the 5-minute timeout for this question
+  const t = setTimeout(
+    () => onQuestionTimeout(client, guildId, questionId),
+    QUESTION_TIMEOUT_MS
+  );
+  questionTimers.set(guildId, t);
 }
 
 async function disableActiveButton(client, config) {
@@ -235,13 +243,16 @@ async function handleTriviaModal(interaction) {
     return true;
   }
 
-  // Award point
+  // Cancel the per-question timeout since it's been answered
+  clearQuestionTimer(guildId);
+
+  // Award point (rest of function unchanged)
   await TriviaScore.findOneAndUpdate(
     { guildId, userId: interaction.user.id },
     { $inc: { score: 1 } },
     { upsert: true }
   );
-
+  
   // Public announcement
   await interaction
     .reply({
@@ -335,4 +346,5 @@ module.exports = {
   handleTriviaModal,
   setChannel,
   getScore,
+  clearQuestionTimer, // exported for cleanup on shutdown if you want
 };
