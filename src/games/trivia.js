@@ -1,3 +1,8 @@
+const INTERVAL_MS = 30 * 60 * 1000;        // 30 minutes between questions
+const QUESTION_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes to answer
+
+const timers = new Map();         // guildId -> interval timer
+const questionTimers = new Map(); // guildId -> per-question timeout
 const crypto = require('crypto');
 const {
   ActionRowBuilder,
@@ -40,6 +45,45 @@ function answerRow(guildId, questionId, disabled = false) {
 
 async function fetchChannel(client, channelId) {
   return client.channels.fetch(channelId).catch(() => null);
+}
+
+function clearQuestionTimer(guildId) {
+  const t = questionTimers.get(guildId);
+  if (t) {
+    clearTimeout(t);
+    questionTimers.delete(guildId);
+  }
+}
+
+async function onQuestionTimeout(client, guildId, questionId) {
+  clearQuestionTimer(guildId);
+
+  const config = await TriviaConfig.findOne({ guildId });
+  if (!config) return;
+  if (config.activeQuestion?.questionId !== questionId) return; // replaced or already answered
+  if (config.activeQuestion?.answeredAt) return;               // already answered
+
+  await disableActiveButton(client, config);
+
+  const channel = await fetchChannel(client, config.channelId);
+  if (channel) {
+    await channel
+      .send(
+        `⌛ Nobody answered the trivia question in time! ` +
+          `The answer was **${config.activeQuestion.answer}**.`
+      )
+      .catch(() => {});
+  }
+
+  config.activeQuestion = {
+    questionId: null,
+    question: null,
+    answer: null,
+    messageId: null,
+    startedAt: null,
+    answeredAt: null,
+  };
+  await config.save();
 }
 
 // ---------- Core: post a question ----------
