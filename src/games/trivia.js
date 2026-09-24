@@ -16,9 +16,6 @@ const TriviaConfig = require('../models/TriviaConfig');
 const TriviaScore = require('../models/TriviaScore');
 const questions = require('../trivia.json');
 
-const INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
-const timers = new Map(); // guildId -> Timeout
-
 // ---------- Helpers ----------
 
 function pickQuestion() {
