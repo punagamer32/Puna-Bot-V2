@@ -1,5 +1,6 @@
 const { handleRpsButton } = require('../games/rps');
 const { handleTriviaButton, handleTriviaModal } = require('../games/trivia');
+const { handleGdButton } = require('../gd/buttons');
 
 module.exports = {
   name: 'interactionCreate',
@@ -12,6 +13,8 @@ module.exports = {
           await handleRpsButton(interaction);
         } else if (interaction.customId.startsWith('trivia:answer:')) {
           await handleTriviaButton(interaction);
+        } else if (interaction.customId.startsWith('gd:')) {
+          await handleGdButton(interaction);
         }
       } catch (err) {
         console.error('[button] handler error:', err);
