@@ -1,8 +1,8 @@
 const http = require('http');
 const https = require('https');
 
-const SELF_URL = process.env.SELF_URL || 'https://puna-bot-v1ar.onrender.com';
-const PORT = process.env.PORT || 3000;
+const SELF_URL = process.env.SELF_URL
+const PORT = process.env.PORT || 10000;
 const PING_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 const REQUEST_TIMEOUT_MS = 10_000;
 
