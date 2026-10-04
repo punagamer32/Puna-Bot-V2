@@ -1,6 +1,11 @@
 const { handleRpsButton } = require('../games/rps');
 const { handleTriviaButton, handleTriviaModal } = require('../games/trivia');
 const { handleGdButton } = require('../gd/buttons');
+const {
+  handleSubmitButton,
+  handleNextButton,
+  handleSubmitModal,
+} = require('../request/panel');
 
 module.exports = {
   name: 'interactionCreate',
@@ -9,12 +14,17 @@ module.exports = {
     // ---- Buttons ----
     if (interaction.isButton()) {
       try {
-        if (interaction.customId.startsWith('rps:')) {
+        const id = interaction.customId;
+        if (id.startsWith('rps:')) {
           await handleRpsButton(interaction);
-        } else if (interaction.customId.startsWith('trivia:answer:')) {
+        } else if (id.startsWith('trivia:answer:')) {
           await handleTriviaButton(interaction);
-        } else if (interaction.customId.startsWith('gd:')) {
+        } else if (id.startsWith('gd:')) {
           await handleGdButton(interaction);
+        } else if (id.startsWith('request:submit-btn:')) {
+          await handleSubmitButton(interaction);
+        } else if (id.startsWith('request:next:')) {
+          await handleNextButton(interaction);
         }
       } catch (err) {
         console.error('[button] handler error:', err);
@@ -32,6 +42,8 @@ module.exports = {
       try {
         if (interaction.customId.startsWith('trivia:submit:')) {
           await handleTriviaModal(interaction);
+        } else if (interaction.customId.startsWith('request:submit-modal:')) {
+          await handleSubmitModal(interaction);
         }
       } catch (err) {
         console.error('[modal] handler error:', err);
