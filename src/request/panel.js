@@ -8,7 +8,7 @@ const {
   TextInputStyle,
   PermissionFlagsBits,
 } = require('discord.js');
-const RequestConfig = require('../models/RequestConfig');
+const RequestConfig = require('../models/requestConfig');
 const { fetchLevel } = require('../gd/api');
 
 const EMBED_COLOR = 0x2b6cb0;
