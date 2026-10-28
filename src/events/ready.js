@@ -1,10 +1,14 @@
 const { REST, Routes } = require('discord.js');
+const { updatePresence } = require('../utils/presence'); // Added this line
 
 module.exports = {
   name: 'ready',
   once: true,
   async execute(client) {
     console.log(`Logged in as ${client.user.tag}`);
+
+    // Added this line to set the rich presence
+    await updatePresence(client);
 
     const commands = client.commands.map(cmd => cmd.data.toJSON());
     const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
