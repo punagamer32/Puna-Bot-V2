@@ -1,11 +1,13 @@
 const { REST, Routes } = require('discord.js');
 const { updatePresence } = require('../utils/presence'); // Added this line
+const { startWebhookServer } = require('../webhook');
 
 module.exports = {
   name: 'ready',
   once: true,
   async execute(client) {
     console.log(`Logged in as ${client.user.tag}`);
+    startWebhookServer();
 
     // Added this line to set the rich presence
     await updatePresence(client);
